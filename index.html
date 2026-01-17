@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пинг-Понг</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        .game-container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: white;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .score {
+            display: flex;
+            justify-content: space-around;
+            color: white;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        canvas {
+            background: #000;
+            border: 3px solid white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            display: block;
+            margin: 0 auto;
+        }
+
+        .controls-panel {
+            margin-top: 25px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 25px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .rules-title {
+            color: #FFD700;
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .rules-text {
+            color: white;
+            font-size: 1.1em;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .controls-section {
+            display: flex;
+            justify-content: space-around;
+            gap: 30px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .player-controls {
+            text-align: center;
+        }
+
+        .player-controls h3 {
+            color: #FFD700;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .control-btn {
+            background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+            color: white;
+            border: 3px solid white;
+            padding: 15px 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            min-width: 80px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .control-btn:hover {
+            background: linear-gradient(135deg, #FF5252, #FF7979);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .control-btn.up {
+            background: linear-gradient(135deg, #4ECDC4, #6EDDD6);
+        }
+
+        .control-btn.up:hover {
+            background: linear-gradient(135deg, #3DBBB4, #5ECDC6);
+        }
+
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            display: none;
+            text-align: center;
+            z-index: 1000;
+        }
+
+        .game-over h2 {
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .game-over button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+
+        .game-over button:hover {
+            background: #764ba2;
+        }
+
+        .pause-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            display: none;
+            text-align: center;
+            z-index: 1000;
+        }
+
+        .pause-overlay h2 {
+            margin-bottom: 20px;
+            font-size: 2em;
+            color: #FFD700;
+        }
+
+        .pause-overlay button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+
+        .pause-overlay button:hover {
+            background: #764ba2;
+        }
+
+        .wins-counter {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 15px 25px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            font-size: 1.3em;
+            font-weight: bold;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .wins-counter .label {
+            color: #FFD700;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .wins-counter .count {
+            font-size: 1.5em;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="wins-counter">
+        <div class="label">ПОБЕДЫ ИГРОКА</div>
+        <div class="count" id="winsCount">0</div>
+    </div>
+    <div class="game-container">
+        <h1>Пинг-Понг</h1>
+        <div class="score">
+            <div>Игрок: <span id="score1">0</span></div>
+            <div>ИИ: <span id="score2">0</span></div>
+        </div>
+        <canvas id="gameCanvas" width="800" height="400"></canvas>
+        <div class="controls-panel">
+            <div class="rules-title">ПРАВИЛА ИГРЫ</div>
+            <div class="rules-text">
+                Первый игрок, набравший 5 очков, побеждает!<br>
+                W - вверх, S - вниз
+            </div>
+        </div>
+    </div>
+
+    <div class="game-over" id="gameOver">
+        <h2 id="winnerText"></h2>
+        <button onclick="resetGame()">Играть снова</button>
+    </div>
+
+    <div class="pause-overlay" id="pauseOverlay">
+        <h2>ПАУЗА</h2>
+        <p style="margin-bottom: 20px;">Нажмите Esc для продолжения игры</p>
+        <button onclick="togglePause()">Продолжить</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Игровые переменные
+        const paddleHeight = 100;
+        const paddleWidth = 10;
+        const ballRadius = 10;
+        const paddleSpeed = 5;
+
+        let player1Y = canvas.height / 2 - paddleHeight / 2;
+        let player2Y = canvas.height / 2 - paddleHeight / 2;
+        let ballX = canvas.width / 2;
+        let ballY = canvas.height / 2;
+        let ballSpeedX = 5;
+        let ballSpeedY = 3;
+        let score1 = 0;
+        let score2 = 0;
+        let isPaused = false;
+        let playerWins = 0;
+        let aiCanBlock = false; // Флаг, определяющий, может ли ИИ отбить мяч в данный момент
+        
+        // Система ускорения мяча
+        const baseSpeedX = 5;
+        const baseSpeedY = 3;
+        let speedMultiplier = 1.0;
+        let gameStartTime = Date.now();
+        let lastSpeedIncreaseTime = Date.now();
+
+        // Управление
+        const keys = {};
+        
+        document.addEventListener('keydown', (e) => {
+            // Обработка паузы по Esc
+            if (e.key === 'Escape' || e.key === 'Esc') {
+                togglePause();
+                e.preventDefault();
+                return;
+            }
+            
+            const key = e.key.toLowerCase();
+            keys[key] = true;
+            keys[e.code] = true;
+            // Предотвращаем стандартное поведение для игровых клавиш
+            if (key === 'w' || key === 's') {
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            const key = e.key.toLowerCase();
+            keys[key] = false;
+            keys[e.code] = false;
+            // Предотвращаем стандартное поведение для игровых клавиш
+            if (key === 'w' || key === 's') {
+                e.preventDefault();
+            }
+        });
+
+        // Функция для работы кнопок
+        function pressKey(key, isPressed) {
+            keys[key.toLowerCase()] = isPressed;
+            keys[key] = isPressed;
+        }
+
+        function updatePaddles() {
+            // Игрок 1 (левая ракетка) - W и S
+            if ((keys['w'] || keys['KeyW']) && player1Y > 0) {
+                player1Y -= paddleSpeed;
+            }
+            if ((keys['s'] || keys['KeyS']) && player1Y < canvas.height - paddleHeight) {
+                player1Y += paddleSpeed;
+            }
+
+            // Игрок 2 (правая ракетка) - ИИ отбивает только 50% мячей
+            if (ballSpeedX > 0) { // Мяч летит в сторону правой ракетки
+                // Определяем, может ли ИИ отбить этот мяч (50% шанс)
+                // Обновляем флаг только когда мяч достаточно близко к ракетке
+                if (ballX > canvas.width - 100) {
+                    if (!aiCanBlock) {
+                        // Случайно определяем, может ли ИИ отбить этот мяч
+                        aiCanBlock = Math.random() < 0.5;
+                    }
+                }
+                
+                // ИИ всегда пытается двигаться к мячу
+                const paddleCenter = player2Y + paddleHeight / 2;
+                const targetY = ballY;
+                
+                if (paddleCenter < targetY - 5 && player2Y < canvas.height - paddleHeight) {
+                    player2Y += paddleSpeed;
+                } else if (paddleCenter > targetY + 5 && player2Y > 0) {
+                    player2Y -= paddleSpeed;
+                }
+            } else {
+                // Сбрасываем флаг, когда мяч летит в другую сторону
+                aiCanBlock = false;
+            }
+        }
+
+        function updateBall() {
+            ballX += ballSpeedX;
+            ballY += ballSpeedY;
+
+            // Отскок от верхней и нижней стенки
+            if (ballY <= ballRadius || ballY >= canvas.height - ballRadius) {
+                ballSpeedY = -ballSpeedY;
+            }
+
+            // Отскок от левой ракетки (игрок 1)
+            if (ballX <= paddleWidth + ballRadius &&
+                ballY >= player1Y &&
+                ballY <= player1Y + paddleHeight) {
+                ballSpeedX = -ballSpeedX;
+                ballX = paddleWidth + ballRadius;
+            }
+
+            // Отскок от правой ракетки (игрок 2) - ИИ отбивает только 50% мячей
+            if (ballX >= canvas.width - paddleWidth - ballRadius &&
+                ballY >= player2Y &&
+                ballY <= player2Y + paddleHeight) {
+                // ИИ отбивает мяч только если флаг aiCanBlock установлен
+                if (aiCanBlock) {
+                    ballSpeedX = -ballSpeedX;
+                    ballX = canvas.width - paddleWidth - ballRadius;
+                    aiCanBlock = false; // Сбрасываем флаг после отбития
+                }
+                // Если aiCanBlock = false, мяч проходит сквозь ракетку (ИИ пропускает)
+            }
+
+            // Гол для игрока 2 (мяч за левой границей)
+            if (ballX < 0) {
+                score2++;
+                document.getElementById('score2').textContent = score2;
+                resetBall();
+            }
+
+            // Гол для игрока 1 (мяч за правой границей)
+            if (ballX > canvas.width) {
+                score1++;
+                document.getElementById('score1').textContent = score1;
+                resetBall();
+            }
+
+            // Проверка победы (до 5 очков)
+            if (score1 >= 5 || score2 >= 5) {
+                endGame();
+            }
+        }
+
+        function resetBall() {
+            ballX = canvas.width / 2;
+            ballY = canvas.height / 2;
+            // Применяем текущий множитель скорости
+            ballSpeedX = (Math.random() > 0.5 ? 1 : -1) * baseSpeedX * speedMultiplier;
+            ballSpeedY = (Math.random() * 2 - 1) * baseSpeedY * speedMultiplier;
+        }
+
+        function endGame() {
+            isPaused = true;
+            const gameOverDiv = document.getElementById('gameOver');
+            const winnerText = document.getElementById('winnerText');
+            if (score1 >= 5) {
+                playerWins++;
+                document.getElementById('winsCount').textContent = playerWins;
+                winnerText.textContent = 'Игрок победил!';
+            } else {
+                winnerText.textContent = 'ИИ победил!';
+            }
+            gameOverDiv.style.display = 'block';
+        }
+
+        function togglePause() {
+            // Не ставим на паузу, если игра уже закончена
+            if (document.getElementById('gameOver').style.display === 'block') {
+                return;
+            }
+            
+            isPaused = !isPaused;
+            const pauseOverlay = document.getElementById('pauseOverlay');
+            if (isPaused) {
+                pauseOverlay.style.display = 'block';
+            } else {
+                pauseOverlay.style.display = 'none';
+                // Сбрасываем время последнего увеличения скорости, чтобы не было скачка
+                lastSpeedIncreaseTime = Date.now();
+            }
+        }
+
+        function resetGame() {
+            score1 = 0;
+            score2 = 0;
+            isPaused = false;
+            speedMultiplier = 1.0;
+            gameStartTime = Date.now();
+            lastSpeedIncreaseTime = Date.now();
+            document.getElementById('score1').textContent = '0';
+            document.getElementById('score2').textContent = '0';
+            document.getElementById('gameOver').style.display = 'none';
+            document.getElementById('pauseOverlay').style.display = 'none';
+            // Количество побед не сбрасывается
+            resetBall();
+        }
+
+        function draw() {
+            // Очистка canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Центральная линия
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Ракетка игрока 1 (левая)
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, player1Y, paddleWidth, paddleHeight);
+
+            // Ракетка игрока 2 (правая)
+            ctx.fillRect(canvas.width - paddleWidth, player2Y, paddleWidth, paddleHeight);
+
+            // Мяч
+            ctx.beginPath();
+            ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
+        }
+
+        function gameLoop() {
+            // Если игра на паузе, только перерисовываем экран
+            if (isPaused) {
+                draw();
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+            
+            // Проверка ускорения мяча каждые 10 секунд
+            const currentTime = Date.now();
+            if (currentTime - lastSpeedIncreaseTime >= 10000) { // 10 секунд = 10000 миллисекунд
+                speedMultiplier *= 1.25;
+                lastSpeedIncreaseTime = currentTime;
+                // Увеличиваем скорость мяча, сохраняя направление
+                ballSpeedX = ballSpeedX * 1.25;
+                ballSpeedY = ballSpeedY * 1.25;
+            }
+            
+            updatePaddles();
+            updateBall();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Запуск игры
+        resetBall();
+        gameLoop();
+    </script>
+</body>
+</html>
+
